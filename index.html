@@ -1,0 +1,31 @@
+<html>
+<head>
+<title>音頭計算機</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script type="text/javascript">
+$(function(){
+	this.calc = function(){
+		var bpm = $("#origin_bpm").val() - 0;
+		var multiple = $("#multiple").val() - 0;
+		$("#slow_bpm").text(bpm*(multiple+1)/(2*multiple));
+		$("#fast_bpm").text(bpm*(multiple+1)/2);
+	}
+
+	$("#origin_bpm").keypress(this.calc);
+	$("#origin_bpm").keyup(this.calc);
+
+	$("#multiple").keypress(this.calc);
+	$("#multiple").keyup(this.calc);
+});
+</script>
+</head>
+<body>
+<form>
+<input type="text" id="multiple" value="2" />倍<br/>
+BPM:<input type="text" id="origin_bpm" value="120" />
+</form>
+遅い方：<span id="slow_bpm">90</span><br/>
+早い方：<span id="fast_bpm">180</span><br/>
+</body>
+</html>
