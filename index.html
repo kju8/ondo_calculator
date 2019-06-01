@@ -2,30 +2,142 @@
 <head>
 <title>音頭計算機</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-<script type="text/javascript">
-$(function(){
-	this.calc = function(){
-		var bpm = $("#origin_bpm").val() - 0;
-		var multiple = $("#multiple").val() - 0;
-		$("#slow_bpm").text(bpm*(multiple+1)/(2*multiple));
-		$("#fast_bpm").text(bpm*(multiple+1)/2);
-	}
-
-	$("#origin_bpm").keypress(this.calc);
-	$("#origin_bpm").keyup(this.calc);
-
-	$("#multiple").keypress(this.calc);
-	$("#multiple").keyup(this.calc);
-});
-</script>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 <body>
-<form>
-<input type="text" id="multiple" value="2" />倍<br/>
-BPM:<input type="text" id="origin_bpm" value="120" />
-</form>
-遅い方：<span id="slow_bpm">90</span><br/>
-早い方：<span id="fast_bpm">180</span><br/>
+	<div class="container">
+		<div class="row">
+			<div class="col">
+				<form>
+					<div class="form-group">
+						<label for="origin_bpm">BPM</label>
+						<input type="number" id="origin_bpm" value="120" step="any" min="0" class="form-control" />
+					</div>
+					<div class="form-row">
+						<div class="form-group col">
+							<label for="multiple">Multiply</label>
+							<input type="number" id="multiple" value="2" step="any" min="1" class="form-control"/>
+						</div>
+						<div class="form-group col">
+							<label for="ratio_l">Ratio</label>
+							<div class="form-row">
+								<div class="col">
+									<input type="number" id="ratio_l" value="2" step="1" min="1" class="form-control"/>
+								</div>
+								<div class="col-md-auto"> : </div>
+								<div class="col">
+									<input type="number" id="ratio_r" value="1" step="1" min="1" class="form-control"/>
+								</div>
+							</div>
+						</div>
+						<div class="form-group col">
+							<label for="split">Split ratio</label>
+							<input type="range" id="split" min="0" value="80" max="120" class="custom-range">
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col">
+				<div class="card">
+					<div class="card-body">
+						<p class="card-text text-center">
+							遅い方<br/><span id="slow_bpm" class="font-weight-bold display-3">90</span>
+						</p>
+					</div>
+				</div>
+			</div>
+			<div class="col">
+				<div class="card">
+					<div class="card-body">
+						<p class="card-text text-center">
+							早い方<br/><span id="fast_bpm" class="font-weight-bold display-3">180</span>
+						</p>
+					</div>
+				</div>
+			</div>
+	</div>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+<script type="text/javascript">
+let toFraction = function(num){
+	num = num - 0;
+	let maxDenominator = 10000;
+	let capacity = 0.000001;
+
+	let numerator = 1;
+	let denominator = 1;
+	let error = 1;
+
+	for(var i=1; i<maxDenominator; i++) {
+		let j1 = (num*i)|0;
+		let j2 = j1 + 1;
+
+		let v1 = j1 / i;
+		let v2 = j2 / i;
+		
+		if(Math.abs(v1-num) < capacity){
+			numerator = j1;
+			denominator = i;
+			break;
+		}else if(Math.abs(v2-num) < capacity){
+			numerator = j2;
+			denominator = i;
+			break;
+		}
+
+		if(Math.abs(v1-num) < error){
+			numerator = j1;
+			denominator = i;
+		}else if(Math.abs(v2-num) < error){
+			numerator = j2;
+			denominator = i;
+		}
+	}
+
+	return [numerator,denominator];
+}
+
+$(function(){
+	let multiple_num = 2;
+	let multiple_den = 1;
+	let bpm_calc = function(){
+		var bpm = $("#origin_bpm").val() - 0;
+		$("#slow_bpm").text(bpm*(multiple_num+multiple_den)/(2*multiple_num));
+		$("#fast_bpm").text(bpm*(multiple_num+multiple_den)/(2*multiple_den));
+	}
+
+	$("#origin_bpm").on('input', bpm_calc);
+
+	$("#multiple").on('input', function(){
+		let frac = toFraction($("#multiple").val());
+		multiple_num = frac[0]; $("#ratio_l").val(frac[0]);
+		multiple_den = frac[1]; $("#ratio_r").val(frac[1]);
+		$("#split").val(multiple_num*120/(multiple_num+multiple_den));
+		bpm_calc();
+	});
+
+	$("#ratio_l,#ratio_r").on('input', function(){
+		multiple_num = $("#ratio_l").val() - 0;
+		multiple_den = $("#ratio_r").val() - 0;
+		$("#multiple").val($("#ratio_l").val() / $("#ratio_r").val());
+		$("#split").val(multiple_num*120/(multiple_num+multiple_den));
+		bpm_calc();
+	});
+
+	$("#split").on('input', function(){
+		let multiple = $("#split").val() / ( 120 - $("#split").val() );
+		let frac = toFraction(multiple);
+		multiple_num = frac[0]; $("#ratio_l").val(frac[0]);
+		multiple_den = frac[1]; $("#ratio_r").val(frac[1]);
+		$("#multiple").val(frac[0] / frac[1]);
+		bpm_calc();
+	});
+});
+</script>
 </body>
 </html>
